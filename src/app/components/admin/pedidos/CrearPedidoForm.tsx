@@ -10,6 +10,7 @@ import { productoService } from '@/app/services/producto.service';
 import { productosKeys } from '@/app/utils/productosKeys';
 import { getEmpresaId } from '@/app/utils/getEmpresaId';
 import { useDebounce } from '@/app/hooks/useDebounce';
+import { extractApiErrorMessage } from '@/lib/apiErrorMessage';
 import type { ProductoWebResponse } from '@/app/types/producto.types';
 
 interface Cliente {
@@ -203,11 +204,27 @@ export function CrearPedidoForm({ onClose, onSuccess }: { onClose: () => void; o
 
       const extOrderId = `MANUAL-${Date.now()}`;
 
-      const clientePayload: any = {};
+      const clientePayload: {
+        razon_social?: string;
+        nombre?: string;
+        cuit?: string;
+        email?: string;
+      } = {};
       if (selectedCliente.razonSocial) clientePayload.razon_social = selectedCliente.razonSocial;
       if (selectedCliente.nombre) clientePayload.nombre = selectedCliente.nombre;
       if (selectedCliente.cuit) clientePayload.cuit = selectedCliente.cuit.replace(/\D/g, '');
-      if (selectedCliente.email) clientePayload.email = selectedCliente.email;
+      const emailTrim = selectedCliente.email?.trim() ?? '';
+      const emailLooksValid =
+        emailTrim.length > 0 &&
+        emailTrim !== '-' &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim);
+      if (emailLooksValid) {
+        clientePayload.email = emailTrim;
+      } else if (emailTrim && !clientePayload.cuit) {
+        throw new Error(
+          'El email del cliente no tiene un formato válido. Corregilo en la ficha del cliente e intentá de nuevo.'
+        );
+      }
 
       const itemsPayload = items.map(item => ({
         sku: item.sku,
@@ -231,7 +248,7 @@ export function CrearPedidoForm({ onClose, onSuccess }: { onClose: () => void; o
       onClose();
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Error al crear pedido');
+      toast.error(extractApiErrorMessage(err, 'Error al crear pedido'));
       setIsSubmitting(false);
     },
   });
