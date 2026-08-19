@@ -127,11 +127,13 @@ export const metadata: Metadata = {
   },
 
   // Verificación y herramientas
-  verification: {
-    google: "tu-código-de-verificación-google",
-    // yandex: "tu-código-yandex",
-    // bing: "tu-código-bing",
-  },
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
 
   // Categorización
   category: "Business",

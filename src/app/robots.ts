@@ -11,6 +11,11 @@ export default function robots(): MetadataRoute.Robots {
                 disallow: [
                     '/api/',
                     '/admin/',
+                    '/auth/',
+                    '/checkout/',
+                    '/perfil',
+                    '/unauthorized',
+                    '/maintenance',
                     '/_next/',
                     '/private/',
                     '*.json',
@@ -23,6 +28,11 @@ export default function robots(): MetadataRoute.Robots {
                 disallow: [
                     '/api/',
                     '/admin/',
+                    '/auth/',
+                    '/checkout/',
+                    '/perfil',
+                    '/unauthorized',
+                    '/maintenance',
                     '/private/',
                 ],
             },

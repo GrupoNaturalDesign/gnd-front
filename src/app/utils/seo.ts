@@ -80,6 +80,11 @@ export const seoConfig = {
     }
 }
 
+export const noIndexRobots = {
+    index: false,
+    follow: false,
+} as const;
+
 // Función para generar metadata dinámica
 export function generatePageMetadata(
     title: string,

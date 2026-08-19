@@ -1,7 +1,13 @@
+import type { Metadata } from 'next';
 import { redirect } from "next/navigation";
 import AdminClientLayout from "./AdminClientLayout";
 import { getCurrentSession } from "@/lib/auth";
 import { AUTH_CALLBACK_PARAM } from "@/lib/auth-callback-url";
+import { noIndexRobots } from '@/app/utils/seo';
+
+export const metadata: Metadata = {
+  robots: noIndexRobots,
+};
 
 const ADMIN_LOGIN_CALLBACK = "/admin/dashboard";
 

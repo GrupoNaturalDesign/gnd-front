@@ -1,9 +1,11 @@
 import { BRAND_NAME, WHATSAPP_PHONE_NUMBER, getWhatsAppNumberForUrl } from '@/app/utils/constants';
+import { generatePageMetadata } from '@/app/utils/seo';
 
-export const metadata = {
-    title: `Políticas de Cambio y Devolución | ${BRAND_NAME}`,
-    description: `Políticas de cambio y devolución de ${BRAND_NAME}. Conocé nuestros términos y condiciones para cambios y devoluciones.`,
-};
+export const metadata = generatePageMetadata(
+    `Políticas de Cambio y Devolución | ${BRAND_NAME}`,
+    `Políticas de cambio y devolución de ${BRAND_NAME}. Conocé nuestros términos y condiciones para cambios y devoluciones.`,
+    '/politicas-cambio-devolucion'
+);
 
 export default function PoliticasCambioDevolucion() {
     return (

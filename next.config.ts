@@ -1,4 +1,15 @@
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.naturalonline.com.ar' }],
+        destination: 'https://naturalonline.com.ar/:path*',
+        permanent: true,
+      },
+    ];
+  },
+
   // Headers de seguridad
   async headers() {
     return [

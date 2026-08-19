@@ -7,6 +7,24 @@ import {
   getMaintenanceBlockScope,
   shouldBlockClientApiRoute,
 } from '@/lib/maintenance-routes';
+import { LEGACY_SEO_REDIRECTS } from '@/app/utils/sitemap-data';
+
+function redirectLegacySeoPath(req: NextRequest, pathname: string): NextResponse | null {
+  const target = LEGACY_SEO_REDIRECTS[pathname];
+  if (!target) return null;
+
+  const url = req.nextUrl.clone();
+  const hashIndex = target.indexOf('#');
+  if (hashIndex >= 0) {
+    url.pathname = target.slice(0, hashIndex) || '/';
+    url.hash = target.slice(hashIndex + 1);
+  } else {
+    url.pathname = target;
+    url.hash = '';
+  }
+  url.search = '';
+  return NextResponse.redirect(url, 301);
+}
 
 const publicPaths = [
   '/',
@@ -24,7 +42,6 @@ const publicPaths = [
 const isPublicPath = (pathname: string) =>
   publicPaths.some((p) => pathname === p || pathname.startsWith(p + '/')) ||
   pathname.startsWith('/producto') ||
-  pathname.startsWith('/categoria') ||
   pathname.startsWith('/shoponline') ||
   pathname.startsWith('/mayorista') ||
   pathname.startsWith('/personalizados') ||
@@ -56,6 +73,17 @@ function maintenanceJsonResponse(scope: 'public' | 'admin'): NextResponse {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  const legacyRedirect = redirectLegacySeoPath(req, pathname);
+  if (legacyRedirect) return legacyRedirect;
+
+  if (pathname.startsWith('/categoria')) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/shoponline';
+    url.search = '';
+    url.hash = '';
+    return NextResponse.redirect(url, 301);
+  }
 
   if (pathname.startsWith('/api/')) {
     const apiScope = shouldBlockClientApiRoute(pathname);

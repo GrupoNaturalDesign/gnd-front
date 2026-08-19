@@ -12,6 +12,7 @@ import {
   type ProductPageQuery,
 } from '@/app/utils/productMicrodata';
 import type { ProductoDetailResponse } from '@/app/services/producto-detail.service';
+import { noIndexRobots } from '@/app/utils/seo';
 
 const META_DESCRIPTION_MAX = 160;
 
@@ -95,6 +96,7 @@ export async function generateMetadata({
 
   const pathSlug = p.slug?.trim() || slug;
   const canonicalPath = `/producto/${pathSlug}`;
+  const hasVariantQuery = Boolean(query.color || query.talle);
 
   const keywords = [p.rubro?.nombre, p.subrubro?.nombre].filter(
     (k): k is string => Boolean(k)
@@ -120,6 +122,7 @@ export async function generateMetadata({
     alternates: {
       canonical: canonicalPath,
     },
+    ...(hasVariantQuery ? { robots: noIndexRobots } : {}),
     ...(microdata
       ? {
           other: {
