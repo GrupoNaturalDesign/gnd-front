@@ -10,6 +10,8 @@ const STANDARD_WEB_TALLES = new Set([
   '3XL',
   '4XL',
   '5XL',
+  '30',
+  '32',
   '34',
   '36',
   '38',

@@ -15,6 +15,8 @@ const TALLE_OPTIONS = [
   { value: '2XL', label: '2XL' },
   { value: '3XL', label: '3XL' },
   { value: '4XL', label: '4XL' },
+  { value: '30', label: '30' },
+  { value: '32', label: '32' },
   { value: '34', label: '34' },
   { value: '36', label: '36' },
   { value: '38', label: '38' },

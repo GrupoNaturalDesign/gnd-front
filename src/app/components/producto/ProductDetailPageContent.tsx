@@ -58,7 +58,7 @@ export default function ProductDetailPageContent({
 
   // Memoizar productName para evitar recálculos innecesarios
   const productName = useMemo(
-    () => groupedProduct?.skuBase || groupedProduct?.displayProduct?.NOMBRE || 'Sin nombre',
+    () => groupedProduct?.displayProduct?.NOMBRE || groupedProduct?.skuBase || 'Sin nombre',
     [groupedProduct]
   );
 
