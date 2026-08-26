@@ -9,8 +9,9 @@ import BaseModal from '@/app/components/modal/BaseModal';
 import { useVariantesStock } from '@/app/hooks/useVariantesStock';
 import { useBulkSelection } from '@/app/hooks/useBulkSelection';
 import { useEmpresaPrecioConfig, calcularPreciosDerivados } from '@/app/hooks/useEmpresaPrecioConfig';
-import type { ProductoPadreConVariantes, ProductoWebResponse } from '@/app/types/producto.types';
+import type { ProductoPadreConVariantes, ProductoWebResponse, MotivoInactivoVariante } from '@/app/types/producto.types';
 import { formatNombreConGenero } from './columns';
+import { badgeClassMotivoInactivo, labelMotivoInactivo } from '@/app/utils/varianteInactiva.util';
 import { Search, Save, Loader2, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { productosKeys } from '@/app/utils/productosKeys';
@@ -71,19 +72,28 @@ export function VariantesStockTable({
     talle: '',
     search: '',
   });
+  const [showInactivas, setShowInactivas] = useState(true);
+
+  const inactivasCount = useMemo(
+    () => variantes.filter((v) => !v.activoSfactory).length,
+    [variantes]
+  );
 
   const queryClient = useQueryClient();
   const { updateBulk, isUpdating } = useVariantesStock();
   const bulkSelection = useBulkSelection(variantes);
   const lastProductIdRef = useRef<number | null>(null);
+  const lastVariantesSyncKeyRef = useRef<string>('');
   const selectionInitializedRef = useRef(false);
   const [syncVersion, setSyncVersion] = useState(0);
   const [showCacheInfo, setShowCacheInfo] = useState(false);
 
-  // Sincronizar variantes solo cuando cambia el producto (abrir modal u otro producto)
+  // Sincronizar variantes cuando cambia el producto o la lista (refetch con scope=todas)
   useEffect(() => {
-    if (producto?.id == null || !initialVariantes.length) return;
-    if (lastProductIdRef.current === producto.id) return;
+    if (producto?.id == null) return;
+    const syncKey = `${producto.id}:${initialVariantes.map((v) => v.id).join(',')}`;
+    if (lastVariantesSyncKeyRef.current === syncKey) return;
+    lastVariantesSyncKeyRef.current = syncKey;
     lastProductIdRef.current = producto.id;
     selectionInitializedRef.current = false;
     const precios = initialVariantes.map(v => v.precioCache).filter(p => p != null) as number[];
@@ -99,7 +109,7 @@ export function VariantesStockTable({
     setPrecioGeneral(precioBase);
     setPrecioGeneralChanged(false);
     setSyncVersion((v) => v + 1);
-  }, [producto?.id]);
+  }, [producto?.id, initialVariantes]);
 
   // Solo seleccionar todas al cargar/sincronizar producto (una vez por sync); evita "Maximum update depth"
   useEffect(() => {
@@ -127,6 +137,7 @@ export function VariantesStockTable({
   // Filtrar variantes
   const filteredVariantes = useMemo(() => {
     return variantes.filter(v => {
+      if (!showInactivas && !v.activoSfactory) return false;
       if (filters.color && v.color !== filters.color) return false;
       if (filters.talle && v.talle !== filters.talle) return false;
       if (filters.search) {
@@ -140,7 +151,7 @@ export function VariantesStockTable({
       }
       return true;
     });
-  }, [variantes, filters, producto.nombre]);
+  }, [variantes, filters, producto.nombre, showInactivas]);
 
   // Habilitar Guardar solo si hay selección y algo cambió respecto a valores iniciales (inputs)
   const hasChanges = useMemo(() => {
@@ -404,7 +415,7 @@ export function VariantesStockTable({
             placeholder="Buscar..."
             value={filters.search}
             onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-            className="w-64 min-w-0 pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-1"
+            className="w-64 min-w-0 pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black"
           />
         </div>
         <div className="flex-shrink-0 overflow-visible">
@@ -427,6 +438,17 @@ export function VariantesStockTable({
             className="min-w-[140px]"
           />
         </div>
+        {inactivasCount > 0 && (
+          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none shrink-0">
+            <input
+              type="checkbox"
+              checked={showInactivas}
+              onChange={(e) => setShowInactivas(e.target.checked)}
+              className="rounded border-gray-300 text-black focus:ring-black"
+            />
+            Mostrar inactivas ({inactivasCount})
+          </label>
+        )}
         <div className="flex items-center justify-end flex-shrink-0 ml-auto">
           <Button
             onClick={handleSaveAll}
@@ -490,6 +512,8 @@ export function VariantesStockTable({
                 const stockValue = variante.editedStock ?? 0;
                 const isStockBajo = stockValue > 0 && stockValue < 10;
                 const isStockAgotado = stockValue === 0;
+                const motivo: MotivoInactivoVariante | undefined =
+                  !variante.activoSfactory ? variante.motivoInactivo ?? 'sin_stock_deposito' : undefined;
 
                 return (
                   <motion.tr
@@ -499,6 +523,7 @@ export function VariantesStockTable({
                     transition={{ delay: index * 0.02 }}
                     className={`
                       hover:bg-gray-50 transition-colors
+                      ${!variante.activoSfactory ? 'opacity-75 bg-gray-50/80' : ''}
                       ${stockChanged || precioChanged ? 'bg-blue-50' : ''}
                     ${bulkSelection.selectedIds.has(variante.id) ? 'bg-blue-50/70' : ''}
                     `}
@@ -514,7 +539,16 @@ export function VariantesStockTable({
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs">{variante.sfactoryCodigo}</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-xs">{variante.sfactoryCodigo}</span>
+                        {motivo && motivo !== 'activa' && (
+                          <span
+                            className={`inline-flex w-fit text-[10px] font-medium px-1.5 py-0.5 rounded ${badgeClassMotivoInactivo(motivo)}`}
+                          >
+                            {labelMotivoInactivo(motivo)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-medium text-sm">{formatNombreConGenero(producto.nombre, producto.genero)}</span>

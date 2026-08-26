@@ -18,6 +18,7 @@ import { BulkActions } from '@/app/components/admin/productos/BulkActions';
 import type { ProductoPadreConVariantes } from '@/app/types/producto.types';
 import type { ProductoPadreBusqueda } from '@/app/services/producto.service';
 import { TableSearchInput } from '@/app/components/admin/TableSearchInput';
+import { productoService } from '@/app/services/producto.service';
 
 // Lazy load modales
 const ProductoSeleccionModal = React.lazy(() => import('@/app/components/producto/ProductoSeleccionModal'));
@@ -113,15 +114,41 @@ export function ProductosTableClient({ empresaId }: ProductosTableClientProps) {
 
   // Estado para modal de gestión de variantes
   const [selectedProductoForVariantes, setSelectedProductoForVariantes] = React.useState<ProductoPadreConVariantes | null>(null);
+  const [loadingVariantesModal, setLoadingVariantesModal] = React.useState(false);
+
+  const handleManageVariantes = React.useCallback(
+    async (producto: ProductoPadreConVariantes) => {
+      setSelectedProductoForVariantes(producto);
+      setLoadingVariantesModal(true);
+      try {
+        const full = await productoService.getById(producto.id, {
+          includeVariantes: true,
+          variantesScope: 'todas',
+        });
+        setSelectedProductoForVariantes(full);
+      } catch {
+        modals.showAlert(
+          'Error',
+          'No se pudieron cargar todas las variantes del producto.',
+          'error'
+        );
+      } finally {
+        setLoadingVariantesModal(false);
+      }
+    },
+    [modals]
+  );
 
   // Sincronizar producto del modal con la lista cuando refetch (ej. tras subir tabla de talles / ficha).
-  // Solo actualizar estado si el item de la lista es distinto (evita setState innecesarios en cada render).
+  // No pisar variantes inactivas cargadas con variantesScope=todas.
   React.useEffect(() => {
     if (!selectedProductoForVariantes?.id || !productosConVariantes?.length) return;
     const updated = productosConVariantes.find((p) => p.id === selectedProductoForVariantes.id);
-    if (updated && updated !== selectedProductoForVariantes) {
-      setSelectedProductoForVariantes(updated);
-    }
+    if (!updated || updated === selectedProductoForVariantes) return;
+    const currentN = selectedProductoForVariantes.productosWeb?.length ?? 0;
+    const updatedN = updated.productosWeb?.length ?? 0;
+    if (updatedN < currentN) return;
+    setSelectedProductoForVariantes(updated);
   }, [productosConVariantes, selectedProductoForVariantes]);
 
   // Estado para modal de selección y modo del wizard
@@ -139,7 +166,7 @@ export function ProductosTableClient({ empresaId }: ProductosTableClientProps) {
         onEdit: actions.handleEdit,
         onTogglePublicado: actions.handleTogglePublicado,
         onToggleDestacado: actions.handleToggleDestacado,
-        onManageVariantes: (producto) => setSelectedProductoForVariantes(producto),
+        onManageVariantes: handleManageVariantes,
         updatingProductoId: mutations.updatingProductoId,
         productosCount: productosConVariantes.length,
       }),
@@ -150,6 +177,7 @@ export function ProductosTableClient({ empresaId }: ProductosTableClientProps) {
       actions.handleEdit,
       actions.handleTogglePublicado,
       actions.handleToggleDestacado,
+      handleManageVariantes,
       mutations.updatingProductoId,
       productosConVariantes.length,
     ]
@@ -277,9 +305,19 @@ export function ProductosTableClient({ empresaId }: ProductosTableClientProps) {
           isOpen={selectedProductoForVariantes !== null}
           onClose={() => setSelectedProductoForVariantes(null)}
           producto={selectedProductoForVariantes}
-          onSuccess={() => {
-            setSelectedProductoForVariantes(null);
-            // Refetch productos
+          loadingVariantes={loadingVariantesModal}
+          onSuccess={async () => {
+            if (selectedProductoForVariantes?.id) {
+              try {
+                const full = await productoService.getById(selectedProductoForVariantes.id, {
+                  includeVariantes: true,
+                  variantesScope: 'todas',
+                });
+                setSelectedProductoForVariantes(full);
+              } catch {
+                setSelectedProductoForVariantes(null);
+              }
+            }
           }}
         />
       </Suspense>

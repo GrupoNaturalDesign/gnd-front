@@ -102,8 +102,15 @@ export function getProductosColumns({
       header: 'Nombre',
       cell: ({ row }) => (
         <div>
-          <div className="font-medium">
-            {formatNombreConGenero(row.original.nombre, row.original.genero)}
+          <div className="font-medium flex flex-wrap items-center gap-2">
+            <span>{formatNombreConGenero(row.original.nombre, row.original.genero)}</span>
+            {(row.original.coloresPendientesCount ?? 0) > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-900">
+                {row.original.coloresPendientesCount} color
+                {row.original.coloresPendientesCount === 1 ? '' : 'es'} nuevo
+                {row.original.coloresPendientesCount === 1 ? '' : 's'}
+              </span>
+            )}
           </div>
           {row.original.descripcionCorta && (
             <div className="text-xs text-neutral-500 mt-1">

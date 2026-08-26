@@ -304,7 +304,7 @@ export function useProductoFormModalSubmit({
       if (onSubmit && wizardState.productoPadreId) {
         const productoFinal = await productoService.getById(
           wizardState.productoPadreId,
-          true
+          { includeVariantes: true }
         );
         await onSubmit(productoFinal);
       }

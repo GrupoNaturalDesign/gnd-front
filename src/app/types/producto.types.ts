@@ -12,6 +12,12 @@ export interface ProductoPrecio {
   minimoUnidades: number | null;
 }
 
+export type MotivoInactivoVariante =
+  | 'activa'
+  | 'sin_stock_deposito'
+  | 'pendiente_aprobacion'
+  | 'sin_color';
+
 export interface ProductoWebResponse {
   id: number;
   empresaId: number;
@@ -28,6 +34,8 @@ export interface ProductoWebResponse {
   stockCache: number | null;
   ultimaSyncSfactory: string | null; // ISO date string
   activoSfactory: boolean;
+  /** Presente cuando el padre se pide con variantesScope=todas */
+  motivoInactivo?: MotivoInactivoVariante;
   imagenVariante: string | null;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
@@ -82,6 +90,7 @@ export interface ProductoPadreConVariantes extends ProductoPadreResponse {
   _count?: {
     productosWeb: number;
   };
+  coloresPendientesCount?: number;
 }
 
 export interface ProductoQueryParams {

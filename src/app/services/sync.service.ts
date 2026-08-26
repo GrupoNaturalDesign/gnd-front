@@ -15,12 +15,21 @@ export interface StockPreciosSyncData {
   lotes: number;
   llamadasApi: number;
   codigosOmitidos: string[];
+  variantesBloqueadasPorWhitelist?: number;
+  detalleBloqueadasWhitelist?: VarianteBloqueadaWhitelist[];
 }
 
 export interface CatalogoSyncStats {
   procesados: number;
   exitosos: number;
   fallidos: number;
+}
+
+export interface VarianteBloqueadaWhitelist {
+  codigoAgrupacion: string;
+  sfactoryCodigo: string;
+  color: string;
+  stock: number;
 }
 
 export interface ProductosSyncResumen {
@@ -33,6 +42,8 @@ export interface ProductosSyncResumen {
   gruposOmitidos?: number;
   exitosos?: number;
   fallidos?: number;
+  variantesBloqueadasPorWhitelist?: number;
+  detalleBloqueadasWhitelist?: VarianteBloqueadaWhitelist[];
 }
 
 export interface ProductosSyncResult {
@@ -52,6 +63,8 @@ export interface ProductosSyncResult {
     productosWebCreados: number;
     exitosos: number;
     fallidos: number;
+    variantesBloqueadasPorWhitelist?: number;
+    detalleBloqueadasWhitelist?: VarianteBloqueadaWhitelist[];
   };
   resumen?: ProductosSyncResumen;
   stockPrecios?: StockPreciosSyncData;

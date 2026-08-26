@@ -69,8 +69,40 @@ export function useProductosSync({ onSuccess, onError }: UseProductosSyncParams 
         data.stockPrecios != null
           ? ` · Stock depósito: ${data.stockPrecios.variantesActualizadas} actualizadas`
           : '';
-      const msg = `${base}${stats}${stockExtra}`;
-      toast.success(msg, { duration: 7000 });
+
+      const bloqueadasResumen = data.resumen?.variantesBloqueadasPorWhitelist ?? 0;
+      const bloqueadasStock = data.stockPrecios?.variantesBloqueadasPorWhitelist ?? 0;
+      const bloqueadasCount = Math.max(bloqueadasResumen, bloqueadasStock);
+      const detalleRaw = [
+        ...(data.resumen?.detalleBloqueadasWhitelist ?? []),
+        ...(data.procesamiento?.detalleBloqueadasWhitelist ?? []),
+        ...(data.stockPrecios?.detalleBloqueadasWhitelist ?? []),
+      ];
+      const detalleUnico = detalleRaw.filter(
+        (row, i, arr) =>
+          arr.findIndex((r) => r.sfactoryCodigo === row.sfactoryCodigo) === i
+      );
+      const bloqueadasExtra =
+        bloqueadasCount > 0
+          ? ` · ${bloqueadasCount} color(es) nuevo(s) para revisar`
+          : '';
+
+      const msg = `${base}${stats}${stockExtra}${bloqueadasExtra}`;
+      toast.success(msg, { duration: bloqueadasCount > 0 ? 12000 : 7000 });
+
+      if (detalleUnico.length > 0) {
+        const preview = detalleUnico
+          .slice(0, 5)
+          .map((r) => `${r.sfactoryCodigo} (${r.color})`)
+          .join(', ');
+        const suffix =
+          detalleUnico.length > 5 ? ` y ${detalleUnico.length - 5} más` : '';
+        toast(
+          `Con stock en Ecommerce, pendientes de aprobar: ${preview}${suffix}. Revisá Gestionar variantes.`,
+          { duration: 14000, icon: '⚠️' }
+        );
+      }
+
       onSuccess?.(msg);
     },
     onError: (error: unknown) => {

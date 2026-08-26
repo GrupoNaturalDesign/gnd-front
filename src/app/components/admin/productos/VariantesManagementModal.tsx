@@ -6,6 +6,7 @@ import BaseModal from '@/app/components/modal/BaseModal';
 import type { ProductoPadreConVariantes } from '@/app/types/producto.types';
 import { formatNombreConGenero } from './columns';
 import { VariantesStockTable } from './VariantesStockTable';
+import { ColoresPendientesPanel } from './ColoresPendientesPanel';
 import { VariantesImagesManager } from './VariantesImagesManager';
 import { DocumentosManager } from './DocumentosManager';
 
@@ -16,6 +17,7 @@ interface VariantesManagementModalProps {
   onClose: () => void;
   producto: ProductoPadreConVariantes | null;
   onSuccess?: () => void;
+  loadingVariantes?: boolean;
 }
 
 type TabType = 'stock' | 'images' | 'documentos';
@@ -25,6 +27,7 @@ function VariantesManagementModal({
   onClose,
   producto,
   onSuccess,
+  loadingVariantes = false,
 }: VariantesManagementModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('stock');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -104,12 +107,24 @@ function VariantesManagementModal({
                 transition={{ duration: 0.2 }}
                 className="flex h-full min-h-0 flex-col"
               >
-                <VariantesStockTable
-                  producto={producto}
-                  variantes={variantes}
-                  onSuccess={onSuccess}
-                  onHasChangesChange={setHasUnsavedChanges}
-                />
+                {loadingVariantes ? (
+                  <div className="flex flex-1 items-center justify-center text-sm text-gray-500">
+                    Cargando variantes (incluye bloqueadas)…
+                  </div>
+                ) : (
+                  <>
+                    <ColoresPendientesPanel
+                      productoPadreId={producto.id}
+                      onAprobado={onSuccess}
+                    />
+                    <VariantesStockTable
+                      producto={producto}
+                      variantes={variantes}
+                      onSuccess={onSuccess}
+                      onHasChangesChange={setHasUnsavedChanges}
+                    />
+                  </>
+                )}
               </motion.div>
             )}
             {activeTab === 'images' && (

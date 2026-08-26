@@ -129,6 +129,13 @@ export interface ProductoCompletoResponse {
   };
 }
 
+export interface ColorPendienteResponse {
+  color: string;
+  variantesCount: number;
+  stockTotal: number;
+  tieneImagen: boolean;
+}
+
 class ProductoService {
   /**
    * Construye query string desde un objeto de parámetros
@@ -166,8 +173,13 @@ class ProductoService {
     };
   }
 
-  async getById(id: number, includeVariantes = false): Promise<ProductoPadreConVariantes> {
-    const endpoint = `/productos/${id}?includeVariantes=${includeVariantes}`;
+  async getById(
+    id: number,
+    options?: { includeVariantes?: boolean; variantesScope?: 'activas' | 'todas' }
+  ): Promise<ProductoPadreConVariantes> {
+    const includeVariantes = options?.includeVariantes ?? false;
+    const scope = options?.variantesScope ?? 'activas';
+    const endpoint = `/productos/${id}?includeVariantes=${includeVariantes}&variantesScope=${scope}`;
     const response = await apiClient.get<ProductoPadreConVariantes>(endpoint);
     if (!response.data) {
       throw new Error('Producto no encontrado');
@@ -407,6 +419,27 @@ class ProductoService {
 
   async deleteFichaTecnica(productoPadreId: number): Promise<void> {
     await apiClient.delete(`/productos/${productoPadreId}/ficha-tecnica`);
+  }
+
+  async getColoresPendientes(productoPadreId: number): Promise<ColorPendienteResponse[]> {
+    const response = await apiClient.get<ColorPendienteResponse[]>(
+      `/productos/${productoPadreId}/colores-pendientes`
+    );
+    return response.data ?? [];
+  }
+
+  async aprobarColor(
+    productoPadreId: number,
+    color: string
+  ): Promise<{ color: string; variantesActivadas: number }> {
+    const response = await apiClient.post<{ color: string; variantesActivadas: number }>(
+      `/productos/${productoPadreId}/colores/aprobar`,
+      { color }
+    );
+    if (!response.data) {
+      throw new Error('Error al aprobar color');
+    }
+    return response.data;
   }
 }
 
