@@ -385,7 +385,6 @@ export function VariantesStockTable({
         onClose={() => setShowCacheInfo(false)}
         title="Caché ecommerce (por producto padre)"
         size="sm"
-        zIndex={1000001}
       >
         <p className="text-sm text-gray-600 leading-relaxed">
           Los valores de <strong>precio</strong> y <strong>stock</strong> que guardás acá actualizan la base de la tienda para las variantes seleccionadas (misma idea que las imágenes: todo el producto desde un solo lugar). En{' '}

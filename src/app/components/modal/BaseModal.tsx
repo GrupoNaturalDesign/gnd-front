@@ -1,8 +1,9 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { MODAL_BASE_Z_INDEX, useModalStack } from './ModalStackContext';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ interface BaseModalProps {
   /** Clases del área bajo el header (por defecto incluye scroll vertical). */
   contentClassName?: string;
   zIndex?: number;
+  /** Si false, nunca muestra overlay oscuro. Si undefined, solo el modal superior del stack lo muestra. */
+  showOverlay?: boolean;
 }
 
 const sizeClasses = {
@@ -37,12 +40,23 @@ const BaseModal: React.FC<BaseModalProps> = ({
   className = '',
   contentClassName = 'p-6 overflow-y-auto overflow-x-hidden flex-1 min-h-0 overscroll-contain',
   zIndex = 999999,
+  showOverlay,
 }) => {
   const [mounted, setMounted] = useState(false);
+  const modalId = useId();
+  const modalStack = useModalStack();
 
   useEffect(() => {
     setMounted(true);
-    // Prevenir scroll del body cuando el modal está abierto
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !modalStack) return;
+    return modalStack.register(modalId);
+  }, [isOpen, modalStack, modalId]);
+
+  useEffect(() => {
+    if (modalStack) return;
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -51,7 +65,23 @@ const BaseModal: React.FC<BaseModalProps> = ({
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, modalStack]);
+
+  const stackIndex = modalStack?.getStackIndex(modalId) ?? -1;
+  const isTopModal =
+    !modalStack ||
+    modalStack.isTop(modalId) ||
+    (isOpen && stackIndex < 0 && modalStack.count === 0);
+  const usesStackZIndex = modalStack != null && isOpen && stackIndex >= 0;
+  const effectiveZIndex = usesStackZIndex
+    ? MODAL_BASE_Z_INDEX + (stackIndex + 1) * 10
+    : zIndex;
+
+  const shouldShowDarkOverlay =
+    showOverlay === false ? false : showOverlay === true ? true : isTopModal;
+
+  const shouldShowClickCatcher =
+    isOpen && isTopModal && !shouldShowDarkOverlay && closeOnOverlayClick;
 
   const handleOverlayClick = () => {
     if (closeOnOverlayClick) {
@@ -63,21 +93,31 @@ const BaseModal: React.FC<BaseModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay - Full screen */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm w-screen h-screen"
-            style={{ zIndex: zIndex - 1 }}
-            onClick={handleOverlayClick}
-          />
+          {shouldShowDarkOverlay && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm w-screen h-screen"
+              style={{ zIndex: effectiveZIndex - 1 }}
+              onClick={handleOverlayClick}
+            />
+          )}
+
+          {shouldShowClickCatcher && (
+            <div
+              className="fixed inset-0 w-screen h-screen"
+              style={{ zIndex: effectiveZIndex - 1 }}
+              onClick={handleOverlayClick}
+              aria-hidden
+            />
+          )}
 
           {/* Modal Container - Full screen container */}
           <div
             className="fixed inset-0 p-4 pointer-events-none flex items-center justify-center overflow-x-hidden overflow-y-auto"
-            style={{ zIndex }}
+            style={{ zIndex: effectiveZIndex }}
           >
             <div
               className={`pointer-events-auto my-auto w-full shrink-0 ${sizeClasses[size]} ${className}`}
@@ -150,4 +190,3 @@ const BaseModal: React.FC<BaseModalProps> = ({
 };
 
 export default BaseModal;
-
