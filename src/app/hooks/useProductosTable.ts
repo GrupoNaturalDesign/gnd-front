@@ -20,6 +20,7 @@ export function useProductosTable({ empresaId, page, limit, search, filters }: U
   const queryParams: ProductoQueryParams = {
     empresaId,
     includeVariantes: true,
+    variantesScope: 'todas',
     page,
     limit,
     search: search || undefined,
@@ -72,7 +73,11 @@ export function useProductosTable({ empresaId, page, limit, search, filters }: U
     
     const productos: ProductoConDatosAgregados[] = query.data.data.map((producto) => {
       const variantes = producto.productosWeb || [];
-      const variantesCount = variantes.length;
+      // Preferir total en BD (_count) por si el scope filtrara; con scope=todas coincide.
+      const variantesCount = Math.max(
+        variantes.length,
+        producto._count?.productosWeb ?? 0
+      );
       
       // Calcular precios
       const precios = variantes

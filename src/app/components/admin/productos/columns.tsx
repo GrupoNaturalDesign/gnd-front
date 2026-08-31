@@ -158,7 +158,11 @@ export function getProductosColumns({
       header: 'Variantes',
       cell: ({ row }) => {
         const producto = row.original as ProductoPadreConVariantes & { variantesCount?: number };
-        const count = producto.variantesCount ?? producto.productosWeb?.length ?? 0;
+        const count = Math.max(
+          producto.variantesCount ?? 0,
+          producto.productosWeb?.length ?? 0,
+          producto._count?.productosWeb ?? 0
+        );
         return (
           <div className="flex items-center gap-2">
             <span className="px-2 py-1 bg-neutral-100 rounded text-xs font-medium">
@@ -171,6 +175,7 @@ export function getProductosColumns({
                   onManageVariantes(producto);
                 }}
                 className="text-xs text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors"
+                title="Gestionar variantes (incluye inactivas)"
               >
                 Gestionar
               </button>

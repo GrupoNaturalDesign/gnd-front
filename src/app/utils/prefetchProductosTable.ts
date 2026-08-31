@@ -22,6 +22,7 @@ export async function prefetchProductosTable(
   const queryParams: ProductoQueryParams = {
     empresaId: params.empresaId,
     includeVariantes: true,
+    variantesScope: 'todas',
     page: params.page,
     limit: params.limit,
     search: params.search || undefined,

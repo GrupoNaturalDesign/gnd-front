@@ -100,6 +100,8 @@ export interface ProductoQueryParams {
   publicado?: boolean;
   destacado?: boolean;
   includeVariantes?: boolean;
+  /** Admin: incluir inactivas (sin stock / sin color / whitelist). */
+  variantesScope?: 'activas' | 'todas';
   search?: string;
   page?: number;
   limit?: number;
