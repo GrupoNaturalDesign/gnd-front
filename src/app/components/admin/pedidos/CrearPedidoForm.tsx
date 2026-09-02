@@ -15,23 +15,45 @@ import type { ProductoWebResponse } from '@/app/types/producto.types';
 
 interface Cliente {
   id?: number;
-  sfactoryId?: number;
-  sfactoryCodigo?: string;
-  razonSocial?: string;
-  nombre?: string;
-  email?: string;
+  sfactoryId?: number | null;
+  sfactoryCodigo?: string | null;
+  razonSocial?: string | null;
+  nombre?: string | null;
+  email?: string | null;
   telefono?: string | null;
   movil?: string | null;
-  cuit?: string | null;
-  tipo?: string;
+  /** Siempre string tras normalización; puede llegar number desde SFactory. */
+  cuit?: string | number | null;
+  tax_id?: string | number | null;
+  legal_name?: string | null;
+  name?: string | null;
+  tipo?: string | null;
   activo?: boolean;
   datosCompletos?: {
-    tax_id?: number;
+    tax_id?: string | number;
     email?: string;
     phones?: string;
     mobile?: string;
     fiscal_address?: string;
   };
+}
+
+/** SFactory manda cuit/tax_id/teléfono como number; nunca llamar .replace sin coerce. */
+function digitsOnlyClient(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value).replace(/\D/g, '');
+  }
+  return '';
+}
+
+function asTrimmedClient(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const s = String(value).trim();
+    return s === '' ? undefined : s;
+  }
+  return undefined;
 }
 
 interface Producto {
@@ -209,11 +231,29 @@ export function CrearPedidoForm({ onClose, onSuccess }: { onClose: () => void; o
         nombre?: string;
         cuit?: string;
         email?: string;
+        telefono?: string;
+        movil?: string;
       } = {};
-      if (selectedCliente.razonSocial) clientePayload.razon_social = selectedCliente.razonSocial;
-      if (selectedCliente.nombre) clientePayload.nombre = selectedCliente.nombre;
-      if (selectedCliente.cuit) clientePayload.cuit = selectedCliente.cuit.replace(/\D/g, '');
-      const emailTrim = selectedCliente.email?.trim() ?? '';
+      const razonSocial = asTrimmedClient(
+        selectedCliente.razonSocial ?? selectedCliente.legal_name
+      );
+      const nombre = asTrimmedClient(selectedCliente.nombre ?? selectedCliente.name);
+      if (razonSocial) clientePayload.razon_social = razonSocial;
+      if (nombre) clientePayload.nombre = nombre;
+
+      const cuitDigits = digitsOnlyClient(
+        selectedCliente.cuit ??
+          selectedCliente.tax_id ??
+          selectedCliente.datosCompletos?.tax_id
+      );
+      if (cuitDigits) clientePayload.cuit = cuitDigits;
+
+      const telefono = asTrimmedClient(selectedCliente.telefono);
+      const movil = asTrimmedClient(selectedCliente.movil);
+      if (telefono) clientePayload.telefono = telefono;
+      if (movil) clientePayload.movil = movil;
+
+      const emailTrim = asTrimmedClient(selectedCliente.email) ?? '';
       const emailLooksValid =
         emailTrim.length > 0 &&
         emailTrim !== '-' &&
@@ -304,9 +344,12 @@ export function CrearPedidoForm({ onClose, onSuccess }: { onClose: () => void; o
                     }}
                     className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b last:border-b-0 cursor-pointer"
                   >
-                    <div className="font-medium text-sm">{cliente.razonSocial || cliente.nombre}</div>
+                    <div className="font-medium text-sm">
+                      {cliente.razonSocial || cliente.legal_name || cliente.nombre || cliente.name}
+                    </div>
                     <div className="text-xs text-gray-500">
-                      {cliente.cuit && `CUIT: ${cliente.cuit}`}
+                      {(cliente.cuit != null || cliente.tax_id != null) &&
+                        `CUIT: ${digitsOnlyClient(cliente.cuit ?? cliente.tax_id) || cliente.cuit || cliente.tax_id}`}
                       {cliente.email && ` | ${cliente.email}`}
                     </div>
                   </button>
@@ -319,9 +362,15 @@ export function CrearPedidoForm({ onClose, onSuccess }: { onClose: () => void; o
             <div className="bg-gray-50 p-3 rounded-md border">
               <div className="flex justify-between items-start">
                 <div>
-                  <div className="font-medium text-sm">{selectedCliente.razonSocial || selectedCliente.nombre}</div>
+                  <div className="font-medium text-sm">
+                    {selectedCliente.razonSocial ||
+                      selectedCliente.legal_name ||
+                      selectedCliente.nombre ||
+                      selectedCliente.name}
+                  </div>
                   <div className="text-xs text-gray-500">
-                    {selectedCliente.cuit && `CUIT: ${selectedCliente.cuit}`}
+                    {(selectedCliente.cuit != null || selectedCliente.tax_id != null) &&
+                      `CUIT: ${digitsOnlyClient(selectedCliente.cuit ?? selectedCliente.tax_id) || selectedCliente.cuit || selectedCliente.tax_id}`}
                     {selectedCliente.email && ` | ${selectedCliente.email}`}
                   </div>
                 </div>
@@ -579,11 +628,19 @@ export function CrearPedidoForm({ onClose, onSuccess }: { onClose: () => void; o
             <div className="text-sm space-y-1.5 border-b border-gray-200 pb-3">
               <div>
                 <span className="text-gray-500">Cliente:</span>{' '}
-                <span className="font-medium">{selectedCliente?.razonSocial || selectedCliente?.nombre}</span>
+                <span className="font-medium">
+                  {selectedCliente?.razonSocial ||
+                    selectedCliente?.legal_name ||
+                    selectedCliente?.nombre ||
+                    selectedCliente?.name}
+                </span>
               </div>
-              {selectedCliente?.cuit && (
+              {(selectedCliente?.cuit != null || selectedCliente?.tax_id != null) && (
                 <div>
-                  <span className="text-gray-500">CUIT:</span> {selectedCliente.cuit}
+                  <span className="text-gray-500">CUIT:</span>{' '}
+                  {digitsOnlyClient(selectedCliente.cuit ?? selectedCliente.tax_id) ||
+                    selectedCliente.cuit ||
+                    selectedCliente.tax_id}
                 </div>
               )}
               {selectedCliente?.email && (
