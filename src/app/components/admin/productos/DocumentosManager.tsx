@@ -32,7 +32,9 @@ type DocTipo = 'tabla-talles' | 'ficha-tecnica';
 
 function isPdf(url: string | null): boolean {
   if (!url) return false;
-  return url.toLowerCase().endsWith('.pdf');
+  // Ignorar query (?v=…) al detectar extensión
+  const pathOnly = url.split('?')[0]?.toLowerCase() ?? '';
+  return pathOnly.endsWith('.pdf');
 }
 
 /** Usa la misma base que las imágenes de producto (NEXT_PUBLIC_IMAGES_BASE_URL) */
@@ -117,6 +119,7 @@ function DocumentoCard({
             /* Imagen — preview */
             <div className="relative group rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
               <img
+                key={publicUrl}
                 src={publicUrl}
                 alt={label}
                 className="w-full max-h-48 object-contain"
