@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUserSession } from '../../hooks/useUserSession';
 import { useAuth } from '@/contexts/AuthContext';
+import { PortalClientesButton } from '@/components/portal-clientes/PortalClientesButton';
 
 
 interface UserMenuProps {
@@ -90,6 +91,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
                                         >
                                             Mi perfil
                                         </button>
+                                        <PortalClientesButton appearance="menu" />
                                         <button
                                             type="button"
                                             className="w-full text-left px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors block"
