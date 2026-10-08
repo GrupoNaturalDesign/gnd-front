@@ -9,7 +9,7 @@ import {
 } from './portalClientes.service';
 
 const LINK = {
-  url: 'https://clientes.naturalonline.com.ar/ssfi/login?token=abc',
+  url: 'https://clientes.naturalonline.com.ar/ssfi/portal?token=abc',
   expiresAt: '2026-10-03T12:03:00.000Z',
 };
 

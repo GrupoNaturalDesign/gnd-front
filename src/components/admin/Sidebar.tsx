@@ -34,6 +34,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  { name: 'Portal Clientes', icon: UserRoundCog, href: '/admin/portal-clientes', badge: null },
   {
     name: 'Dashboard',
     icon: LayoutDashboard,

@@ -34,6 +34,12 @@ export function usePortalClientesSso() {
       const { url } = await obtenerLinkPortalClientes();
       window.location.assign(url);
     } catch (error) {
+      if (error && typeof error === 'object' && 'status' in error && error.status === 409) {
+        window.location.assign('/portal-clientes');
+        enCurso.current = false;
+        setIsLoading(false);
+        return;
+      }
       toast.error(mensajeErrorPortalClientes(error));
       enCurso.current = false;
       setIsLoading(false);
