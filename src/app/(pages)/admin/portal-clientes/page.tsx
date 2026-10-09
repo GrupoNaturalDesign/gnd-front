@@ -38,7 +38,6 @@ export default function PortalClientesAdminPage() {
     <p>Confirmá con la empresa o RR. HH. que la cuenta pertenece al colaborador antes de aprobar. El rol del usuario no cambia.</p>
     {message && <div role="status" className="rounded-lg border bg-white p-4 space-y-2"><p>{message}</p>{message === 'Vinculación aprobada.' && <p className="text-sm text-neutral-600">La cuenta aprobada ya puede ingresar desde Portal Clientes en la tienda. Esta pantalla administra vinculaciones.</p>}</div>}
     <nav className="flex flex-col gap-3 sm:flex-row" aria-label="Acceso a la tienda">
-      <Link href="/portal-clientes" className="rounded-lg bg-neutral-900 px-4 py-3 text-center text-white">Probar mi acceso como cliente</Link>
       <Link href="/" className="rounded-lg border px-4 py-3 text-center">Volver a la tienda</Link>
     </nav>
     <div className="grid min-w-0 gap-3 sm:grid-cols-2">

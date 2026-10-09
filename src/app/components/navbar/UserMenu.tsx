@@ -16,7 +16,7 @@ interface UserMenuProps {
 export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const router = useRouter();
-    const { user, isLoading, isAuthenticated } = useUserSession();
+    const { user, isLoading, isAuthenticated, sessionState } = useUserSession();
     const { logout, refreshSessionState } = useAuth();
 
     const iconWrap = isMobile ? 'w-6 h-6' : 'w-8 h-8';
@@ -91,7 +91,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ isMobile = false }) => {
                                         >
                                             Mi perfil
                                         </button>
-                                        <PortalClientesButton appearance="menu" />
+                                        {sessionState?.role === 'USER' && <PortalClientesButton appearance="menu" />}
                                         <button
                                             type="button"
                                             className="w-full text-left px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors block"
