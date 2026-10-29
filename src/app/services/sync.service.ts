@@ -8,6 +8,11 @@ interface SyncProgress {
 
 export interface StockPreciosSyncData {
   warehouseId: number;
+  mode?: 'initial' | 'incremental';
+  changedSince?: string | null;
+  rowsReceived?: number;
+  nextCursorAt?: string | null;
+  skippedDueToLock?: boolean;
   codigosConsultados: number;
   variantesActualizadas: number;
   variantesOmitidas: number;

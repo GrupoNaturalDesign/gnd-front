@@ -30,7 +30,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     const {
         itemCount,
         subtotal,
-        subtotalTransfer,
+        totalLista,
+        totalTransfer,
         isEmpty,
         updateBordado,
         removeFromCart,
@@ -115,7 +116,8 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                             items={sortedItems}
                             itemCount={itemCount}
                             subtotal={subtotal}
-                            subtotalTransfer={subtotalTransfer}
+                            totalLista={totalLista}
+                            totalTransfer={totalTransfer}
                             isInCheckout={isInCheckout}
                             isWholesaleLimitReached={isWholesaleLimitReached}
                             config={config}

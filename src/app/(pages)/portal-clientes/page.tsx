@@ -8,7 +8,7 @@ import { apiClient } from '@/lib/apiClient';
 import { extractApiErrorMessage } from '@/lib/apiErrorMessage';
 import { obtenerLinkPortalClientes } from '@/app/services/portalClientes.service';
 
-type Estado = { estado: string; emailVerificado: boolean };
+type Estado = { estado: string; emailVerificado: boolean; motivo?: string | null };
 
 export default function PortalClientesPage() {
   const { sessionState, isLoading } = useAuth();
@@ -39,7 +39,7 @@ export default function PortalClientesPage() {
     try {
       const res = await apiClient.post<{ estado: string }>('/portal-clientes/identidad', { documento });
       if (!res.data) throw new Error('No pudimos guardar tu solicitud.');
-      setDocumento(''); setEstado({ estado: res.data.estado, emailVerificado: true });
+      setDocumento(''); setEstado({ estado: res.data.estado, emailVerificado: true, motivo: null });
     } catch (e) { setError(extractApiErrorMessage(e, 'No pudimos guardar tu solicitud.')); }
     finally { setBusy(false); }
   }
@@ -59,7 +59,7 @@ export default function PortalClientesPage() {
     {estado && !estado.emailVerificado && <p>Primero verificá tu email. <Link className="underline" href="/auth/verify-email?callbackUrl=/portal-clientes">Verificar email</Link></p>}
     {estado?.estado === 'aprobado' && <><p role="status">Tu identidad está vinculada. El portal comprobará si estás habilitado en la nómina.</p><button onClick={ingresar} disabled={busy} className="rounded-lg bg-neutral-900 px-5 py-3 text-white">{busy ? 'Ingresando…' : 'Ingresar al portal'}</button></>}
     {estado?.estado === 'pendiente' && <div className="space-y-4"><p role="status">Recibimos tu solicitud. Nuestro equipo debe confirmar la vinculación con tu empresa antes de habilitar el acceso. No necesitás volver a enviarla.</p><button onClick={consultar} disabled={busy} className="underline">Comprobar estado</button></div>}
-    {estado?.estado === 'rechazado' && <p>La vinculación no pudo confirmarse. Revisá los datos o contactá a tu empresa antes de volver a solicitarla.</p>}
+    {estado?.estado === 'rechazado' && <div role="status" className="space-y-2"><p>La vinculación fue rechazada. Revisá el motivo antes de volver a solicitarla o contactá a tu empresa.</p>{estado.motivo && <p className="rounded-lg bg-neutral-100 p-3 text-sm"><strong>Motivo:</strong> {estado.motivo}</p>}<p className="text-sm text-neutral-600">También enviamos esta decisión a tu email verificado.</p></div>}
     {estado?.emailVerificado && ['sin_solicitud', 'rechazado'].includes(estado.estado) && <form onSubmit={enviar} className="space-y-4">
       <label className="block" htmlFor="portal-documento">Tu DNI o CUIL personal</label>
       <input id="portal-documento" value={documento} onChange={(e) => setDocumento(e.target.value)} required maxLength={24} inputMode="numeric" autoComplete="off" aria-describedby="portal-explicacion" className="w-full rounded-lg border p-3" />

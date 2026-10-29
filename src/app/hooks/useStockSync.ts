@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { syncService } from '@/app/services/sync.service';
 import { productosKeys } from '@/app/utils/productosKeys';
 import { useSync } from '@/components/admin/SyncContext';
+import { stockSyncFeedback } from '@/app/utils/stockSyncFeedback';
 
 interface UseStockSyncParams {
   onSuccess?: (message: string) => void;
@@ -38,43 +39,11 @@ export function useStockSync({ onSuccess, onError }: UseStockSyncParams = {}) {
 
       const d = result.data;
       if (d) {
-        if (d.variantesActualizadas === 0 && d.variantesOmitidas > 0) {
-          const msg = `Stock: sin cambios (${d.variantesOmitidas} variantes omitidas) · depósito ${d.warehouseId}`;
-          toast.success(msg, { duration: 6000 });
-          onSuccess?.(msg);
-          return;
-        }
-
-        if (d.variantesActualizadas === 0) {
-          if (d.codigosConsultados === 0) {
-            const msg =
-              'Stock: no hay variantes WORKWEAR/OFFICE activas. Sincronizá rubros y productos primero.';
-            toast.error(msg, { duration: 8000 });
-            onSuccess?.(msg);
-            return;
-          }
-          const msg = `Stock: 0 variantes actualizadas (${d.codigosConsultados} códigos en ${d.lotes} lotes). S-Factory no devolvió filas que coincidan con tus códigos o el depósito ${d.warehouseId} no tiene datos para ellos.`;
-          toast.error(msg, { duration: 10000 });
-          onSuccess?.(msg);
-          return;
-        }
-
-        const omitidosMsg =
-          d.variantesOmitidas > 0
-            ? ` · ${d.variantesOmitidas} sin cambios (omitidas)`
-            : '';
-        const preciosMsg =
-          d.preciosActualizados > 0 ? ` · ${d.preciosActualizados} precios` : '';
-        const omitidos = d.codigosOmitidos?.length
-          ? ` · Omitidos en S-Factory: ${d.codigosOmitidos.length} (${d.codigosOmitidos.slice(0, 5).join(', ')}${d.codigosOmitidos.length > 5 ? '…' : ''})`
-          : '';
-        const okMsg = `Stock: ${d.variantesActualizadas} variantes actualizadas${omitidosMsg}${preciosMsg} · depósito ${d.warehouseId} · ${d.llamadasApi ?? d.lotes} llamada(s) API${omitidos}`;
-        if (d.codigosOmitidos?.length) {
-          toast(okMsg, { duration: 10000, icon: '⚠️' });
-        } else {
-          toast.success(okMsg, { duration: 6000 });
-        }
-        onSuccess?.(okMsg);
+        const feedback = stockSyncFeedback(d);
+        if (feedback.tone === 'error') toast.error(feedback.message, { duration: 8000 });
+        else if (feedback.tone === 'warning') toast(feedback.message, { duration: 8000, icon: '⚠️' });
+        else toast.success(feedback.message, { duration: 6000 });
+        onSuccess?.(feedback.message);
         return;
       }
 

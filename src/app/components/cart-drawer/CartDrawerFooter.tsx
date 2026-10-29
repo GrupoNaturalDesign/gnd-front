@@ -12,7 +12,8 @@ interface CartDrawerFooterProps {
     items: CartItem[];
     itemCount: number;
     subtotal: number;
-    subtotalTransfer: number;
+    totalLista: number;
+    totalTransfer: number;
     isInCheckout: boolean;
     isWholesaleLimitReached: boolean;
     config: {
@@ -30,7 +31,8 @@ export const CartDrawerFooter: React.FC<CartDrawerFooterProps> = ({
     items,
     itemCount,
     subtotal,
-    subtotalTransfer,
+    totalLista,
+    totalTransfer,
     isInCheckout,
     isWholesaleLimitReached,
     config,
@@ -65,10 +67,10 @@ export const CartDrawerFooter: React.FC<CartDrawerFooterProps> = ({
 
             {/* Resumen de precios */}
             <div className="space-y-1 pt-1 border-t border-gray-200">
-                {subtotalTransfer > 0 && subtotalTransfer < subtotal && (
+                {totalTransfer > 0 && totalTransfer < totalLista && (
                     <div className="flex justify-between items-baseline gap-2 text-[11px] text-[#Ed3237] pb-1">
                         <span className="font-medium">Con transferencia</span>
-                        <span className="font-semibold tabular-nums">{formatPrice(subtotalTransfer)}</span>
+                        <span className="font-semibold tabular-nums">{formatPrice(totalTransfer)}</span>
                     </div>
                 )}
                 <div className="flex justify-between items-baseline text-base font-bold text-black pt-1 border-t border-gray-300">
