@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import { CartState, CartProduct, CartItem, CustomerData, ShippingData, PaymentData } from '../types/cart';
 import { trackMetaAddToCart } from '@/app/analytics/metaPixel/metaPixel.client';
 
@@ -7,6 +7,24 @@ import { WHATSAPP_PHONE_NUMBER, getWhatsAppNumberForUrl } from '@/app/utils/cons
 import { calculateTotals } from '@/app/stores/cartTotals';
 import { canAddQuantity } from '@/app/services/stockService';
 import { SALES_CONFIG } from '../config/sales.config';
+
+const safeLocalStorage: StateStorage = {
+    getItem: (name) => {
+        const value = localStorage.getItem(name);
+        if (value === null) return null;
+
+        try {
+            JSON.parse(value);
+            return value;
+        } catch {
+            // Una entrada corrupta no debe impedir iniciar sesión ni usar la web.
+            localStorage.removeItem(name);
+            return null;
+        }
+    },
+    setItem: (name, value) => localStorage.setItem(name, value),
+    removeItem: (name) => localStorage.removeItem(name),
+};
 
 export const useCartStore = create<CartState>()(
     persist(
@@ -269,6 +287,18 @@ export const useCartStore = create<CartState>()(
         }),
         {
             name: 'ntds-cart-storage',
+            storage: createJSONStorage(() => safeLocalStorage),
+            merge: (persistedState, currentState) => {
+                const persisted = persistedState && typeof persistedState === 'object'
+                    ? persistedState as Partial<CartState>
+                    : {};
+
+                return {
+                    ...currentState,
+                    ...persisted,
+                    items: Array.isArray(persisted.items) ? persisted.items : [],
+                };
+            },
             partialize: (state) => ({
                 items: state.items,
                 customerData: state.customerData,
@@ -276,7 +306,8 @@ export const useCartStore = create<CartState>()(
                 paymentData: state.paymentData,
             }),
             onRehydrateStorage: () => (state) => {
-                if (state && state.items) {
+                if (state) {
+                    state.items = Array.isArray(state.items) ? state.items : [];
                     state.cuponAplicado = null;
                     state.cuponDescuento = 0;
                     const totals = calculateTotals(state.items);

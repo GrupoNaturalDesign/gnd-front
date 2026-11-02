@@ -1,17 +1,20 @@
 import type { CartItem } from '@/app/types/cart';
 import { IVA_RATE } from '@/app/utils/constants';
 
-export function calculateTotals(items: CartItem[]) {
-  const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
+export function calculateTotals(items: CartItem[] | null | undefined) {
+  // El carrito se restaura desde localStorage. Versiones viejas o datos
+  // corruptos pueden no incluir `items`; nunca deben bloquear el login.
+  const safeItems = Array.isArray(items) ? items : [];
+  const itemCount = safeItems.reduce((acc, item) => acc + item.quantity, 0);
 
-  const totalLista = items.reduce((acc, item) => {
+  const totalLista = safeItems.reduce((acc, item) => {
     if (item.subtotal === 0 && item.product.precioLista && item.product.precioLista > 0) {
       return acc + item.quantity * item.product.precioLista;
     }
     return acc + item.subtotal;
   }, 0);
 
-  const totalTransfer = items.reduce((acc, item) => {
+  const totalTransfer = safeItems.reduce((acc, item) => {
     if (item.subtotalTransfer !== undefined) {
       return acc + item.subtotalTransfer;
     }

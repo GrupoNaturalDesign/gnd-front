@@ -78,6 +78,15 @@ describe('calculateTotals', () => {
     });
   });
 
+  it('tolera un carrito persistido sin items', () => {
+    expect(calculateTotals(undefined)).toMatchObject({
+      itemCount: 0,
+      totalLista: 0,
+      totalTransfer: 0,
+      total: 0,
+    });
+  });
+
   it('calcula IVA correctamente (21%)', () => {
     const items: CartItem[] = [
       item({

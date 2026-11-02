@@ -17,7 +17,16 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const savedState = localStorage.getItem('sidebar-collapsed');
     if (savedState !== null) {
-      setIsCollapsed(JSON.parse(savedState));
+      try {
+        const parsed = JSON.parse(savedState);
+        if (typeof parsed === 'boolean') {
+          setIsCollapsed(parsed);
+        } else {
+          localStorage.removeItem('sidebar-collapsed');
+        }
+      } catch {
+        localStorage.removeItem('sidebar-collapsed');
+      }
     }
   }, []);
 
